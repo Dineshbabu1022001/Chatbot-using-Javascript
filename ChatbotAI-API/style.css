@@ -132,3 +132,15 @@ body {
   #send-btn:hover {
     background-color: #b71c1c;
   }
+.typing-dots {
+    display: inline-block;
+    font-size: 1.2rem;
+    font-weight: bold;
+    animation: blink 1.2s infinite steps(1);
+}
+
+@keyframes blink {
+    0% { opacity: 0.2; }
+    50% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
