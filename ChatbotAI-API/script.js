@@ -32,18 +32,34 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function appendMessage(sender, message) {
+    function appendMessage(sender, message, isTyping = false) {
         const messageElement = document.createElement("div");
         messageElement.classList.add("message", sender);
-        messageElement.textContent = message;
+        
+        if (isTyping) {
+            messageElement.innerHTML = `<span class="typing-dots">...</span>`;
+            messageElement.classList.add("typing");
+        } else {
+            messageElement.textContent = message;
+        }
+
         chatbotMessages.appendChild(messageElement);
         chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+
+        return isTyping ? messageElement : null;
     }
 
     async function getBotResponse(userMessage) {
-        const apiKey = "AIzaSyBMKXk3fFfPzLyRX_ar4WUduKygkZiZj1w"
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-    
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBMKXk3fFfPzLyRX_ar4WUduKygkZiZj1w`;
+
+        const typingIndicator = appendMessage("bot", "...", true);  //add Typing indicator
+
+        let dots = 0;
+        const typingAnimation = setInterval(() => {
+            dots = (dots + 1) % 4;
+            typingIndicator.innerHTML = `<span class="typing-dots">${".".repeat(dots)}</span>`;
+        }, 500);
+
         try {
             const response = await fetch(apiUrl, {
                 method: "POST",
@@ -52,10 +68,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     contents: [{ role: "user", parts: [{ text: userMessage }] }]
                 }),
             });
-    
+
             const data = await response.json();
             console.log(data);
-    
+
+            clearInterval(typingAnimation); // Stop animation
+            typingIndicator.remove(); // Remove the typing indicator
+
             if (data.candidates && data.candidates.length > 0) {
                 const botMessage = data.candidates[0].content.parts[0].text;
                 appendMessage("bot", botMessage);
@@ -64,6 +83,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         } catch (error) {
             console.error("Error fetching bot response:", error);
+            clearInterval(typingAnimation);
+            typingIndicator.remove();
             appendMessage("bot", "Sorry, something went wrong. Please try again.");
         }
     }
